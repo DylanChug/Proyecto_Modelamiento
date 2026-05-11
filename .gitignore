@@ -1,0 +1,29 @@
+# Dependencias (Las carpetas más pesadas)
+node_modules/
+jspm_packages/
+
+# Variables de entorno (SEGURIDAD: Aquí van tus contraseñas de DB)
+.env
+*.env.local
+
+# Archivos de compilación (Carpetas que se crean al hacer "build")
+dist/
+build/
+.next/
+out/
+
+# Logs (Registros de errores que ensucian el repo)
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Configuración de editores
+.vscode/
+.idea/
+*.suo
+*.ntvs*
