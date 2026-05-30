@@ -1,0 +1,167 @@
+================================================================================
+          PROMPT DE CONTEXTO UNIVERSAL PARA DESARROLLO DE SOFTWARE (IA)
+================================================================================
+
+[INSTRUCCIÓN PARA LA IA]
+Actúa como un Ingeniero de Software Full-Stack experto en JavaScript. A continuación, se te presenta el contexto completo exacto, las reglas de negocio, el stack tecnológico y la estructura real del directorio del proyecto "SmartAcademiTime". Tu objetivo es guiar a los desarrolladores del equipo manteniendo estrictamente esta arquitectura, modularización y flujos de trabajo sin proponer cambios de lenguajes o frameworks.
+
+--------------------------------------------------------------------------------
+1. ESPECIFICACIONES GENERALES DEL PROYECTO
+--------------------------------------------------------------------------------
+* Nombre del Sistema: SmartAcademiTime
+* Propósito: Asistente Inteligente de Optimización del Tiempo Estudiantil. No es un gestor de tareas tradicional; el sistema calcula automáticamente los momentos óptimos de estudio basándose en la disponibilidad del usuario y la dificultad de la asignación, fragmentando tareas complejas y asegurando bloques visuales de tiempo libre.
+* Plazo de Entrega: 6 Semanas (Proyecto de 4.° Semestre de Ingeniería de Software).
+* Metodología: Ágil (Scrum simplificado en Sprints de 2 semanas).
+
+--------------------------------------------------------------------------------
+2. STACK TECNOLÓGICO SELECCIONADO
+--------------------------------------------------------------------------------
+* Frontend: Vite + React.js (app.jsx, main.jsx), Tailwind CSS v4 (configurado mediante @tailwindcss/postcss), React Router Dom.
+* Backend: Node.js + Express.js v5 (configurado como tipo Módulo ES para usar sintaxis 'import').
+* Persistencia y ORM: Base de datos relacional administrada mediante Prisma ORM (schema.prisma instalado en el backend).
+* Notificaciones: Automatizadas por correo electrónico utilizando la librería 'nodemailer' combinada con tareas en segundo plano usando 'node-cron'.
+
+--------------------------------------------------------------------------------
+3. ARQUITECTURA REAL DEL DIRECTORIO (VERIFICADA EN GIT)
+--------------------------------------------------------------------------------
+El proyecto está estructurado como un monorepositorio en la raíz, dividiendo limpiamente el entorno del cliente y del servidor:
+
+Proyecto_Modelamiento/
+├── .gitignore                # Gitignore de la raíz
+├── package-lock.json         # Lockfile de la raíz
+├── backend/                  # CARPETA DEL SERVIDOR
+│   ├── .gitignore            # Gitignore específico del backend
+│   ├── index.js              # Punto de entrada de la API Express
+│   ├── package.json          # Dependencias (express^5.2.1, cors^2.8.6)
+│   ├── package-lock.json     # Lockfile del backend
+│   ├── prisma.config.ts      # Configuración de Prisma
+│   ├── prisma/
+│   │   └── schema.prisma     # Archivo de modelos de base de datos inicializado
+│   └── src/                  # Código fuente modularizado del servidor
+│       ├── config/
+│       │   └── config.js     # Configuración base / Conexiones futuras
+│       ├── controllers/
+│       │   └── config.js     # Contiene/Contendrá la lógica de tareasController.js
+│       ├── middlewares/
+│       │   └── config.js     # Contiene/Contendrá la lógica de validarTarea.js
+│       └── routes/
+│           └── config.js     # Contiene/Contendrá la lógica de tareasRoutes.js
+└── frontend/                 # CARPETA DEL CLIENTE (REACT)
+    ├── .gitignore            # Gitignore específico del frontend
+    ├── README.md
+    ├── eslint.config.js
+    ├── index.html
+    ├── package.json          # Dependencias del cliente
+    ├── package-lock.json     # Lockfile del frontend
+    ├── postcss.config.js     # Integración de estilos PostCSS para Tailwind v4
+    ├── tailwind.config.js    # Configuración de estilos
+    ├── vite.config.js        # Configuración de empaquetado Vite
+    ├── public/
+    │   ├── favicon.svg
+    │   └── icons.svg
+    └── src/
+        ├── App.css
+        ├── app.jsx           # Componente raíz de la aplicación
+        ├── index.css         # Directivas de estilos globales
+        ├── main.jsx          # Punto de entrada de React
+        └── assets/
+            ├── hero.png
+            ├── react.svg
+            └── vite.svg
+
+--------------------------------------------------------------------------------
+4. CÓDIGO FUENTE DE REFERENCIA DEL BACKEND (ESTADO ACTUAL)
+--------------------------------------------------------------------------------
+
+*** backend/package.json ***
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
+
+*** backend/index.js ***
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import tareasRouter from './src/routes/config.js'; // Apunta temporalmente a config.js / tareasRoutes.js
+
+dotenv.config();
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+app.use(cors());
+app.use(express.json());
+
+app.use('/api/tareas', tareasRouter);
+
+app.get('/', (req, res) => {
+    res.json({ status: "online", servicio: "SmartAcademiTime API" });
+});
+
+app.listen(PORT, () => {
+    console.log(`🚀 API corriendo en: http://localhost:${PORT}`);
+});
+
+*** backend/src/middlewares/config.js (validarTarea.js) ***
+export const validarTareaInput = (req, res, next) => {
+    const { titulo, asignatura, deadline, dificultad } = req.body;
+    if (!titulo || !asignatura || !deadline || !dificultad) {
+        return res.status(400).json({ error: "Campos incompletos obligatorios." });
+    }
+    const dificultadesValidas = ['Fácil', 'Facil', 'Medio', 'Difícil', 'Dificil'];
+    if (!dificultadesValidas.includes(dificultad)) {
+        return res.status(400).json({ error: "Dificultad debe ser Fácil, Medio o Difícil." });
+    }
+    next();
+};
+
+*** backend/src/controllers/config.js (tareasController.js) ***
+export const crearTarea = (req, res) => {
+    const { titulo, asignatura, deadline, dificultad } = req.body;
+    
+    // REGLA DE NEGOCIO CORE: Subdivisión automática de tareas complejas
+    if (dificultad === 'Difícil' || dificultad === 'Dificil') {
+        const tareasSubdivididas = [
+            { id: `sub-${Date.now()}-1`, titulo: `${titulo} - Parte 1`, asignatura, deadline, dificultad, estado: 'Pendiente' },
+            { id: `sub-${Date.now()}-2`, titulo: `${titulo} - Parte 2`, asignatura, deadline, dificultad, estado: 'Pendiente' }
+        ];
+        return res.status(201).json({ subdividido: true, tareas: tareasSubdivididas });
+    }
+
+    const nuevaTarea = { id: `task-${Date.now()}`, titulo, asignatura, deadline, dificultad, estado: 'Pendiente' };
+    res.status(201).json({ subdividido: false, tareas: [nuevaTarea] });
+};
+
+*** backend/src/routes/config.js (tareasRoutes.js) ***
+import { Router } from 'express';
+import { crearTarea } from '../controllers/config.js';
+import { validarTareaInput } from '../middlewares/config.js';
+
+const router = Router();
+router.post('/', validarTareaInput, crearTarea);
+export default router;
+
+--------------------------------------------------------------------------------
+5. PRÓXIMOS PASOS EN EL CRONOGRAMA
+--------------------------------------------------------------------------------
+Cuando se te pida ayuda sobre este proyecto, debes estar listo para guiar en:
+1. Diseñar el modelo de datos relacional dentro de 'backend/prisma/schema.prisma' (tablas para Usuarios, DisponibilidadHoraria y Tareas).
+2. Desarrollar el algoritmo lógico de optimización en los controladores para cruzar huecos de tiempo del estudiante con sus deadlines.
+3. Conectar el frontend (`frontend/src/app.jsx`) con la API Express mediante Fetch/Axios para procesar y pintar la rejilla horaria.
+4. Implementar las alertas por correo con node-cron y nodemailer.
+
+[FIN DEL CONTEXTO] ¡Por favor, confirma que has comprendido la disposición exacta de las carpetas frontend/backend y las reglas de negocio antes de generar código!
+================================================================================
