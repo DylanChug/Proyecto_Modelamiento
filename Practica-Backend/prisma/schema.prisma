@@ -1,0 +1,75 @@
+datasource db {
+  provider = "mysql"
+  url = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "rhel-openssl-3.0.x"]
+}
+
+model Usuario {
+  id_usuario String   @id
+  nombre     String
+  password   String
+  creado_at  DateTime @default(now())
+
+  configuracion Configuracion?
+  actividades       Actividad[]
+  historial_metricas HistorialMetricas[]
+
+  @@map("usuarios")
+}
+
+model Actividad {
+  id_actividad             Int      @id @default(autoincrement())
+  titulo                   String
+  descripcion              String?  @db.Text
+  categoria                String
+  estado                   String   @default("Pendiente")
+  dia_sugerido             String   @db.Text
+  hora_inicio              String   @db.VarChar(5)
+  hora_fin                 String   @db.VarChar(5)
+  duracion_minutos         Int
+  fecha_entrega            DateTime
+  prioridad                String   @default("Media")
+  dificultad               Int
+  nivel_estres             String
+  justificacion_pedagogica String?  @db.Text
+  descanso_posterior       Boolean  @default(false)
+  creado_at                DateTime @default(now())
+  actualizado_at           DateTime @updatedAt
+  id_usuario               String
+  notificado               Boolean @default(false) 
+  usuario Usuario @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade)
+
+  @@map("actividades")
+}
+
+model HistorialMetricas {
+  id_historial        Int    @id @default(autoincrement())
+  periodo             String
+  horas_estudio       Float  @default(0.0)
+  horas_libre_ganadas Float  @default(0.0)
+  tareas_completadas  Int    @default(0)
+  id_usuario          String
+
+  usuario Usuario @relation(fields: [id_usuario], references: [id_usuario], onDelete: Cascade)
+
+  @@unique([periodo, id_usuario])
+  @@map("historial_metricas")
+}
+
+model Configuracion {
+  id                Int      @id @default(autoincrement())
+  usuarioId         String   @unique // Relación uno a uno con tu Usuario (id_usuario / email)
+  usuario           Usuario  @relation(fields: [usuarioId], references: [id_usuario], onDelete: Cascade)
+  
+  ordenes_ia        String   @db.Text // @db.Text permite textos largos para las directrices
+  nivel_estricto_ia String   @default("moderado")
+  bloques_energia   String   @db.Text // Guardaremos el objeto de los días como un String JSON
+  hora_sueno_inicio String   @default("23:00")
+  hora_sueno_fin    String   @default("06:30")
+
+  fecha_actualizacion DateTime @updatedAt
+}
